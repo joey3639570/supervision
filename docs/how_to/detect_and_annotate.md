@@ -125,6 +125,7 @@ You can load predictions from other computer vision frameworks and libraries usi
 - [`from_detectron2`](/latest/detection/core/#supervision.detection.core.Detections.from_detectron2) ([Detectron2](https://github.com/facebookresearch/detectron2))
 - [`from_mmdetection`](/latest/detection/core/#supervision.detection.core.Detections.from_mmdetection) ([MMDetection](https://github.com/open-mmlab/mmdetection))
 - [`from_sam`](/latest/detection/core/#supervision.detection.core.Detections.from_sam) ([Segment Anything Model](https://github.com/facebookresearch/segment-anything))
+- [`from_sam3`](/latest/detection/core/#supervision.detection.core.Detections.from_sam3) ([Segment Anything Model 3](https://github.com/facebookresearch/sam3))
 - [`from_yolo_nas`](/latest/detection/core/#supervision.detection.core.Detections.from_yolo_nas) ([YOLO-NAS](https://github.com/Deci-AI/super-gradients/blob/master/YOLONAS.md))
 
 ## Annotate Image with Detections

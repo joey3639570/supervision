@@ -153,3 +153,32 @@ Desktop.ini
 *~
 .directory
 .Trash-*
+
+# Node.js / Frontend
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+dist/
+dist-ssr/
+*.local
+
+# Frontend build
+supervision-web/frontend/dist/
+supervision-web/frontend/.vite/
+supervision-web/frontend/.env.local
+supervision-web/frontend/.env.*.local
+
+# Backend
+supervision-web/backend/__pycache__/
+supervision-web/backend/*.pyc
+supervision-web/backend/.env
+supervision-web/backend/static/
+supervision-web/backend/uploads/
+supervision-web/backend/processed/
+
+# IDE
+*.swp
+*.swo
+*~

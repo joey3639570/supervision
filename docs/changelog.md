@@ -2,6 +2,10 @@
 
 ### 0.27.0 <small>Nov 16, 2025</small>
 
+- Added: [`sv.Detections.from_sam3`](https://supervision.roboflow.com/0.27.0/detection/core/#supervision.detection.core.Detections.from_sam3) to support [Segment Anything Model 3 (SAM3)](https://github.com/facebookresearch/sam3). SAM3 is the latest version of the Segment Anything Model, which supports concept-based prompting (e.g., phrases, image examples) for detecting, segmenting, and tracking objects in images and videos. The method accepts SAM3 inference results and converts them to the standard `Detections` format, maintaining compatibility with all Supervision annotators, trackers, and tools.
+
+### 0.27.0 <small>Nov 16, 2025</small>
+
 - Added [#2008](https://github.com/roboflow/supervision/pull/2008): [`sv.filter_segments_by_distance`](https://supervision.roboflow.com/0.27.0/detection/utils/masks/#supervision.detection.utils.masks.filter_segments_by_distance) to keep the largest connected component and nearby components within an absolute or relative distance threshold. Useful for cleaning segmentation predictions from models such as SAM, SAM2, YOLO segmentation, and RF-DETR segmentation.
 
 - Added [#2006](https://github.com/roboflow/supervision/pull/2006): [`sv.xyxy_to_mask`](https://supervision.roboflow.com/0.27.0/detection/utils/converters/#supervision.detection.utils.converters.xyxy_to_mask) to convert bounding boxes into 2D boolean masks, where each mask corresponds to a single box.

@@ -688,6 +688,65 @@ class Detections:
         return cls(xyxy=xyxy, mask=mask)
 
     @classmethod
+    def from_sam3(cls, sam3_result: list[dict]) -> Detections:
+        """
+        Creates a Detections instance from
+        [Segment Anything Model 3 (SAM3)](https://github.com/facebookresearch/sam3)
+        inference result.
+
+        SAM3 is the latest version of the Segment Anything Model, which supports
+        concept-based prompting (e.g., phrases, image examples) for detecting,
+        segmenting, and tracking objects in images and videos.
+
+        Args:
+            sam3_result (List[dict]): The output Results instance from SAM3.
+                Each dictionary should contain:
+                - "bbox" (List[float]): Bounding box in [x, y, width, height] format
+                - "segmentation" (np.ndarray): Boolean mask array
+                - "area" (float): Area of the mask (optional, used for sorting)
+
+        Returns:
+            Detections: A new Detections object.
+
+        Example:
+            ```python
+            import supervision as sv
+            from sam3 import SAM3
+
+            sam3 = SAM3(checkpoint=CHECKPOINT_PATH, device=DEVICE)
+            sam3_result = sam3.generate(IMAGE, prompts=["person", "car"])
+            detections = sv.Detections.from_sam3(sam3_result=sam3_result)
+            ```
+
+        Note:
+            If SAM3 output format is identical to SAM/SAM2, this method will
+            work seamlessly. If the format differs, the conversion logic can be
+            updated accordingly.
+        """
+        # SAM3 uses the same output format as SAM/SAM2
+        # Sort masks by area (largest first) if area is available
+        if sam3_result and "area" in sam3_result[0]:
+            sorted_masks = sorted(
+                sam3_result, key=lambda x: x.get("area", 0), reverse=True
+            )
+        else:
+            sorted_masks = sam3_result
+
+        if not sorted_masks:
+            return cls.empty()
+
+        # Extract bounding boxes and masks
+        xywh = np.array([mask["bbox"] for mask in sorted_masks])
+        masks = np.array([mask["segmentation"] for mask in sorted_masks])
+
+        if np.asarray(xywh).shape[0] == 0:
+            return cls.empty()
+
+        # Convert xywh to xyxy format
+        xyxy = xywh_to_xyxy(xywh=xywh)
+        return cls(xyxy=xyxy, mask=masks)
+
+    @classmethod
     def from_azure_analyze_image(
         cls, azure_result: dict, class_map: dict[int, str] | None = None
     ) -> Detections:
