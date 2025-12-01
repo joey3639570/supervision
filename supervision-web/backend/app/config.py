@@ -25,8 +25,17 @@ DEFAULT_MODEL_TYPE = "yolov8n"
 DEFAULT_CONFIDENCE_THRESHOLD = 0.25
 DEFAULT_IOU_THRESHOLD = 0.45
 
+# SAM3 檢查點設定
+# 可以透過環境變數 SAM3_CHECKPOINT_PATH 進行覆寫，例如：
+# SAM3_CHECKPOINT_PATH=/path/to/sam3_hiera_base.pt
+SAM3_CHECKPOINT_DIR = BASE_DIR / "checkpoints"
+SAM3_CHECKPOINT_DIR.mkdir(parents=True, exist_ok=True)
+SAM3_CHECKPOINT_PATH = os.getenv(
+    "SAM3_CHECKPOINT_PATH",
+    str(SAM3_CHECKPOINT_DIR / "sam3_hiera_base.pt"),
+)
+
 # 環境變數
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
-
 

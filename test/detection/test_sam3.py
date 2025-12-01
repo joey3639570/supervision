@@ -131,3 +131,4 @@ def test_from_sam3_single_mask():
     assert detections.mask.shape == (1, 100, 100)
 
 
+

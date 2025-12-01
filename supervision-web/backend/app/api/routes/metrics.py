@@ -46,3 +46,4 @@ async def calculate_metrics(request: MetricRequest):
         raise HTTPException(status_code=500, detail=f"計算錯誤: {str(e)}")
 
 
+

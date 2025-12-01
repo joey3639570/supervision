@@ -4,3 +4,4 @@ export { default as VideoUploader } from './VideoUploader.vue'
 export { default as DetectionCanvas } from './DetectionCanvas.vue'
 export { default as AnnotatorSelector } from './AnnotatorSelector.vue'
 
+
