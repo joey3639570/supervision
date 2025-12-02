@@ -34,6 +34,7 @@ const menuItems = [
   { title: '物件檢測', icon: 'mdi-target', to: '/detect' },
   { title: '圖像分割', icon: 'mdi-image-edit', to: '/segment' },
   { title: '物件追蹤', icon: 'mdi-video', to: '/track' },
+  { title: 'SAM3 演示', icon: 'mdi-robot', to: '/sam3' },
   { title: '標註工具', icon: 'mdi-draw', to: '/annotate' },
   { title: '資料集管理', icon: 'mdi-database', to: '/dataset' },
   { title: '評估指標', icon: 'mdi-chart-line', to: '/metrics' },

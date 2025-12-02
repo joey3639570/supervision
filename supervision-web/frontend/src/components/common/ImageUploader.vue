@@ -5,7 +5,6 @@
       :label="label"
       accept="image/*"
       prepend-icon="mdi-image"
-      @change="handleFileChange"
       :disabled="disabled"
     ></v-file-input>
     
@@ -64,13 +63,33 @@ const previewUrl = ref(null)
 const isDragOver = ref(false)
 
 watch(() => props.modelValue, (newVal) => {
-  file.value = newVal
+  if (newVal !== file.value) {
+    file.value = newVal
+  }
+})
+
+// 监听 file 的变化（v-file-input 的 v-model 会直接更新 file）
+watch(file, (newFile, oldFile) => {
+  // 只在文件实际变化时处理，避免初始化时的重复处理
+  if (newFile !== oldFile) {
+    handleFileChange(newFile)
+  }
 })
 
 const handleFileChange = (newFile) => {
-  if (newFile) {
-    emit('update:modelValue', newFile)
-    emit('change', newFile)
+  // v-file-input 的 v-model 可能返回 File 对象或 File 数组
+  let actualFile = null
+  if (newFile instanceof File) {
+    actualFile = newFile
+  } else if (Array.isArray(newFile) && newFile.length > 0) {
+    actualFile = newFile[0]
+  } else if (newFile instanceof FileList && newFile.length > 0) {
+    actualFile = newFile[0]
+  }
+  
+  if (actualFile && actualFile instanceof File) {
+    emit('update:modelValue', actualFile)
+    emit('change', actualFile)
     
     // 生成預覽 URL
     const reader = new FileReader()
@@ -78,7 +97,7 @@ const handleFileChange = (newFile) => {
       previewUrl.value = e.target.result
       emit('preview', e.target.result)
     }
-    reader.readAsDataURL(newFile)
+    reader.readAsDataURL(actualFile)
   } else {
     previewUrl.value = null
     emit('update:modelValue', null)
@@ -90,7 +109,7 @@ const handleDrop = (e) => {
   const droppedFiles = e.dataTransfer.files
   if (droppedFiles.length > 0) {
     file.value = droppedFiles[0]
-    handleFileChange(droppedFiles[0])
+    // watch 会自动触发 handleFileChange，不需要手动调用
   }
 }
 

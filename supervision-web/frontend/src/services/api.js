@@ -46,14 +46,25 @@ export default {
   },
 
   // 分割 (SAM3)
-  async segment(imageFile, params) {
+  async segment(imageFile, params = {}) {
     const formData = new FormData()
     formData.append('image', imageFile)
-    if (params.prompts) {
+    
+    // prompts 是可选的，但如果提供了就发送
+    if (params.prompts && Array.isArray(params.prompts) && params.prompts.length > 0) {
       formData.append('prompts', JSON.stringify(params.prompts))
     }
+    
+    // 必需字段，使用默认值
     formData.append('prompt_type', params.promptType || 'text')
-    formData.append('auto_generate', params.autoGenerate || false)
+    formData.append('auto_generate', String(params.autoGenerate === true || params.autoGenerate === 'true'))
+    formData.append('confidence_threshold', String(params.confidence || 0.5))
+    formData.append('device', params.device || 'cuda')
+    
+    // 可选字段
+    if (params.checkpointPath) {
+      formData.append('checkpoint_path', params.checkpointPath)
+    }
     
     return api.post('/segment', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
@@ -147,6 +158,97 @@ export default {
   // 座標轉換
   async convertCoordinates(request) {
     return api.post('/utils/convert', request)
+  },
+
+  // SAM3 對象計數
+  async sam3Count(imageFile, params) {
+    const formData = new FormData()
+    formData.append('image', imageFile)
+    formData.append('prompt', params.prompt || 'object')
+    formData.append('confidence_threshold', params.confidence || 0.5)
+    if (params.checkpointPath) {
+      formData.append('checkpoint_path', params.checkpointPath)
+    }
+    formData.append('device', params.device || 'cuda')
+    
+    return api.post('/sam3/count', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+
+  // SAM3 多提示詞檢測
+  async sam3MultiPrompt(imageFile, params) {
+    const formData = new FormData()
+    formData.append('image', imageFile)
+    formData.append('prompts', JSON.stringify(params.prompts || []))
+    formData.append('confidence_threshold', params.confidence || 0.5)
+    if (params.checkpointPath) {
+      formData.append('checkpoint_path', params.checkpointPath)
+    }
+    formData.append('device', params.device || 'cuda')
+    
+    return api.post('/sam3/multi-prompt', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+
+  // SAM3 線計數
+  async sam3LineCount(videoFile, params) {
+    const formData = new FormData()
+    formData.append('video', videoFile)
+    formData.append('prompt', params.prompt || 'object')
+    formData.append('line_start_x', params.lineStartX)
+    formData.append('line_start_y', params.lineStartY)
+    formData.append('line_end_x', params.lineEndX)
+    formData.append('line_end_y', params.lineEndY)
+    formData.append('confidence_threshold', params.confidence || 0.5)
+    if (params.checkpointPath) {
+      formData.append('checkpoint_path', params.checkpointPath)
+    }
+    formData.append('device', params.device || 'cuda')
+    
+    return api.post('/sam3/line-count', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+
+  // SAM3 區域計數
+  async sam3ZoneCount(videoFile, params) {
+    const formData = new FormData()
+    formData.append('video', videoFile)
+    formData.append('prompt', params.prompt || 'object')
+    formData.append('zones', JSON.stringify(params.zones))
+    formData.append('confidence_threshold', params.confidence || 0.5)
+    if (params.checkpointPath) {
+      formData.append('checkpoint_path', params.checkpointPath)
+    }
+    formData.append('device', params.device || 'cuda')
+    
+    return api.post('/sam3/zone-count', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+
+  // SAM3 追蹤
+  async sam3Track(videoFile, params) {
+    const formData = new FormData()
+    formData.append('video', videoFile)
+    formData.append('prompt', params.prompt || 'object')
+    formData.append('confidence_threshold', params.confidence || 0.5)
+    formData.append('trace_length', params.traceLength || 30)
+    if (params.checkpointPath) {
+      formData.append('checkpoint_path', params.checkpointPath)
+    }
+    formData.append('device', params.device || 'cuda')
+    
+    return api.post('/sam3/track', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+
+  // 獲取 SAM3 任務狀態
+  async getSam3TaskStatus(taskId) {
+    return api.get(`/sam3/task/${taskId}`)
   }
 }
 

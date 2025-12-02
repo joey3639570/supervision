@@ -45,7 +45,24 @@ supervision-web/
 ```bash
 cd backend
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+
+# 使用啟動腳本（推薦，自動設置 SAM3 路徑）
+./start.sh
+
+# 或手動啟動（需要設置 PYTHONPATH）
+export PYTHONPATH="../sam3:$PYTHONPATH"
+uvicorn app.main:app --reload --port 8001
+```
+
+**注意**: SAM3 功能需要：
+1. 確保 `/root/joey/supervision/sam3` 目錄存在（或設置正確的 SAM3 路徑）
+2. 確保檢查點文件存在於 `/root/joey/sam3_model/sam3.pt`（或通過環境變數 `SAM3_CHECKPOINT_PATH` 指定）
+3. 所有依賴已安裝（見 `requirements.txt`）
+4. 使用 `start.sh` 腳本啟動以自動設置 Python 路徑
+
+**檢查點配置**: 系統會自動查找檢查點文件。如果使用不同的位置，設置環境變數：
+```bash
+export SAM3_CHECKPOINT_PATH=/path/to/sam3.pt
 ```
 
 ### 前端

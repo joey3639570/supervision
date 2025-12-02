@@ -37,7 +37,34 @@ class SupervisionService:
         elif model_type == "sam":
             detections = sv.Detections.from_sam(model_result)
         elif model_type == "sam3":
-            detections = sv.Detections.from_sam3(model_result)
+            # supervision 0.27.0 沒有 from_sam3 方法，需要手動轉換
+            # 如果 model_result 已經是 Detections 對象，直接使用
+            if isinstance(model_result, sv.Detections):
+                detections = model_result
+            else:
+                # 否則嘗試手動創建（這應該不會發生，因為 SAM3Service 已經返回 Detections）
+                # 這裡保留作為備份
+                import numpy as np
+                if isinstance(model_result, list) and len(model_result) > 0:
+                    xyxy_list = []
+                    confidence_list = []
+                    mask_list = []
+                    for result in model_result:
+                        if "bbox_xyxy" in result:
+                            xyxy_list.append(result["bbox_xyxy"])
+                        elif "bbox" in result:
+                            x, y, w, h = result["bbox"]
+                            xyxy_list.append([x, y, x + w, y + h])
+                        confidence_list.append(result.get("score", 0.5))
+                        if "segmentation" in result:
+                            mask_list.append(result["segmentation"])
+                    detections = sv.Detections(
+                        xyxy=np.array(xyxy_list, dtype=np.float32),
+                        confidence=np.array(confidence_list, dtype=np.float32),
+                        mask=np.array(mask_list, dtype=bool) if mask_list else None
+                    )
+                else:
+                    detections = sv.Detections.empty()
         elif model_type == "transformers":
             detections = sv.Detections.from_transformers(
                 model_result, 

@@ -27,13 +27,29 @@ DEFAULT_IOU_THRESHOLD = 0.45
 
 # SAM3 檢查點設定
 # 可以透過環境變數 SAM3_CHECKPOINT_PATH 進行覆寫，例如：
-# SAM3_CHECKPOINT_PATH=/path/to/sam3_hiera_base.pt
+# SAM3_CHECKPOINT_PATH=/path/to/sam3.pt
+# 默認檢查點位置（按優先順序）
+DEFAULT_SAM3_CHECKPOINT_PATHS = [
+    "/root/joey/sam3_model/sam3.pt",  # 實際模型位置
+    "/root/joey/sam3_model/model.safetensors",  # 備選格式
+    str(BASE_DIR / "checkpoints" / "sam3_hiera_base.pt"),  # 本地備份位置
+    str(BASE_DIR / "checkpoints" / "sam3.pt"),  # 本地備份位置
+]
+
+# 從環境變數獲取或使用第一個存在的默認路徑
+SAM3_CHECKPOINT_PATH = os.getenv("SAM3_CHECKPOINT_PATH")
+if not SAM3_CHECKPOINT_PATH:
+    for path in DEFAULT_SAM3_CHECKPOINT_PATHS:
+        if os.path.exists(path):
+            SAM3_CHECKPOINT_PATH = path
+            break
+    else:
+        # 如果都不存在，使用第一個默認路徑（會在運行時報錯）
+        SAM3_CHECKPOINT_PATH = DEFAULT_SAM3_CHECKPOINT_PATHS[0]
+
+# 確保檢查點目錄存在（用於可能的備份）
 SAM3_CHECKPOINT_DIR = BASE_DIR / "checkpoints"
 SAM3_CHECKPOINT_DIR.mkdir(parents=True, exist_ok=True)
-SAM3_CHECKPOINT_PATH = os.getenv(
-    "SAM3_CHECKPOINT_PATH",
-    str(SAM3_CHECKPOINT_DIR / "sam3_hiera_base.pt"),
-)
 
 # 環境變數
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"

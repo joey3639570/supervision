@@ -1,0 +1,7 @@
+supervision
+torch
+torchvision
+numpy
+opencv-python
+Pillow
+tqdm

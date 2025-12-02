@@ -236,7 +236,19 @@ const loadImage = (url) => {
   image.value.onload = () => {
     const maxWidth = 800
     const maxHeight = 600
-    const scale = Math.min(maxWidth / image.value.width, maxHeight / image.value.height, 1)
+    
+    // 計算最大縮放比例（允許放大以適應容器）
+    const maxScale = Math.min(maxWidth / image.value.width, maxHeight / image.value.height)
+    
+    // 計算最小縮放比例，確保圖片至少 480x480
+    const minWidth = 480
+    const minHeight = 480
+    const minScaleWidth = image.value.width < minWidth ? minWidth / image.value.width : 1
+    const minScaleHeight = image.value.height < minHeight ? minHeight / image.value.height : 1
+    const minScale = Math.max(minScaleWidth, minScaleHeight)
+    
+    // 使用最小和最大縮放比例中的較大值，確保圖片至少 480x480
+    const scale = Math.max(minScale, maxScale)
     
     canvasWidth.value = image.value.width * scale
     canvasHeight.value = image.value.height * scale

@@ -15,6 +15,7 @@
             <ImageUploader
               v-model="imageFile"
               label="選擇圖片"
+              :show-preview="true"
               @preview="handlePreview"
             />
 
@@ -36,22 +37,18 @@
               class="mt-4"
             ></v-text-field>
 
-            <v-chip-group
-              v-if="promptType === 'text'"
-              v-model="selectedPrompts"
-              column
-              multiple
-              class="mt-2"
-            >
+            <div v-if="promptType === 'text'" class="mt-2">
               <v-chip
                 v-for="prompt in promptHistory"
                 :key="prompt"
                 :value="prompt"
-                filter
+                :class="{ 'ma-1': true }"
+                :color="selectedPrompts.includes(prompt) ? 'primary' : 'default'"
+                @click="togglePrompt(prompt)"
               >
                 {{ prompt }}
               </v-chip>
-            </v-chip-group>
+            </div>
 
             <v-btn
               v-if="promptType === 'text' && textPrompt"
@@ -130,14 +127,17 @@
               <DetectionCanvas
                 ref="canvasRef"
                 :image-url="previewUrl"
-                :masks="viewMode === 'overlay' ? masks : []"
+                :masks="viewMode === 'overlay' || viewMode === 'masks' ? masks : []"
                 :detections="viewMode === 'overlay' ? maskBoxes : []"
+                :show-image="viewMode !== 'masks'"
                 annotator-type="box"
                 @click="handleCanvasClick"
               />
             </div>
             <div v-else class="text-center text-grey py-12">
-              請上傳圖片開始分割
+              <v-icon size="64" color="grey-lighten-1">mdi-image-outline</v-icon>
+              <p class="mt-4">請上傳圖片開始分割</p>
+              <p class="text-caption text-grey">上傳圖片後，您可以在執行分割前預覽圖片</p>
             </div>
           </v-card-text>
           <v-card-actions v-if="masks.length > 0">
@@ -195,12 +195,44 @@ const addPrompt = () => {
   textPrompt.value = ''
 }
 
+const togglePrompt = (prompt) => {
+  const index = selectedPrompts.value.indexOf(prompt)
+  if (index > -1) {
+    selectedPrompts.value.splice(index, 1)
+  } else {
+    selectedPrompts.value.push(prompt)
+  }
+}
+
 const segment = async () => {
   if (!imageFile.value) return
 
+  // 驗證提示詞
+  if (promptType.value === 'text' && (!selectedPrompts.value || selectedPrompts.value.length === 0)) {
+    alert('請至少選擇一個提示詞')
+    return
+  }
+
   loading.value = true
   try {
-    const prompts = promptType.value === 'text' ? selectedPrompts.value : null
+    // 根據提示類型設置 prompts
+    let prompts = null
+    if (promptType.value === 'text') {
+      prompts = selectedPrompts.value && selectedPrompts.value.length > 0 
+        ? selectedPrompts.value 
+        : null
+    } else if (promptType.value === 'auto') {
+      // 自動模式不需要 prompts
+      prompts = null
+    }
+    // point 和 box 模式暫時不支持，使用默認值
+    
+    console.log('Sending segmentation request:', {
+      promptType: promptType.value,
+      prompts,
+      autoGenerate: promptType.value === 'auto'
+    })
+    
     const response = await api.segment(imageFile.value, {
       prompts,
       promptType: promptType.value,
@@ -208,9 +240,23 @@ const segment = async () => {
     })
 
     masks.value = response.masks || []
+    console.log('Segmentation result:', masks.value.length, 'masks')
   } catch (error) {
     console.error('Segmentation failed:', error)
-    alert('分割失敗: ' + error.message)
+    let errorMessage = '分割失敗'
+    if (error.response) {
+      // 服务器返回的错误
+      if (error.response.status === 503) {
+        errorMessage = 'SAM3 服務不可用。請安裝 sam3 套件以使用 SAM3 功能。'
+      } else if (error.response.data?.detail) {
+        errorMessage = error.response.data.detail
+      } else {
+        errorMessage = `請求失敗: ${error.response.status} ${error.response.statusText}`
+      }
+    } else if (error.message) {
+      errorMessage = error.message
+    }
+    alert(errorMessage)
   } finally {
     loading.value = false
   }
@@ -235,7 +281,12 @@ const clearMasks = () => {
 
 <style scoped>
 .canvas-container {
-  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  min-height: 400px;
   overflow: auto;
+  padding: 16px;
 }
 </style>

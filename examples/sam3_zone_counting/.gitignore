@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+*.mp4
+*.avi
+*.mov
+*.mkv
+output*.mp4
+result*.mp4
+zones.json

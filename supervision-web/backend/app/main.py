@@ -17,7 +17,8 @@ from app.api.routes import (
     metrics,
     geometry,
     video,
-    utils
+    utils,
+    sam3,
 )
 
 app = FastAPI(
@@ -50,6 +51,7 @@ app.include_router(metrics.router, prefix="/api/v1", tags=["Metrics"])
 app.include_router(geometry.router, prefix="/api/v1", tags=["Geometry"])
 app.include_router(video.router, prefix="/api/v1", tags=["Video"])
 app.include_router(utils.router, prefix="/api/v1", tags=["Utils"])
+app.include_router(sam3.router, prefix="/api/v1", tags=["SAM3"])
 
 
 @app.get("/")
