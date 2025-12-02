@@ -16,6 +16,7 @@ from app.models.schemas import (
     ModelType
 )
 from app.services.supervision_service import SupervisionService
+from app.services.model_service import ModelService
 from app.config import UPLOAD_DIR, PROCESSED_DIR, ALLOWED_IMAGE_EXTENSIONS
 
 router = APIRouter()
@@ -41,6 +42,7 @@ async def detect_objects(
     
     - **image**: 圖片檔案
     - **model_type**: 模型類型 (yolov8, yolov5, yolonas, etc.)
+    - **model_id**: 特定模型 ID 或路徑（可選）
     - **confidence_threshold**: 信心閾值 (0.0-1.0)
     - **iou_threshold**: IoU 閾值 (0.0-1.0)
     - **classes**: 要檢測的類別 ID 列表 (JSON 字串)
@@ -63,13 +65,36 @@ async def detect_objects(
         if img is None:
             raise HTTPException(status_code=400, detail="無法讀取圖片")
         
-        # TODO: 實際的模型推理
-        # 這裡需要根據 model_type 載入對應的模型並進行推理
-        # 目前返回示例數據
-        
-        # 示例：創建空的檢測結果
+        # 載入模型並進行推理
         import supervision as sv
-        detections = sv.Detections.empty()
+        
+        try:
+            # 載入模型
+            model, model_key = ModelService.load_model(
+                model_type=model_type,
+                model_id=model_id,
+                device=ModelService.get_device()
+            )
+            
+            # 執行推理
+            if model_type in ["yolov8", "yolov9", "yolov10"]:
+                # Ultralytics YOLO
+                results = model(img, conf=confidence_threshold, iou=iou_threshold)[0]
+                detections = sv.Detections.from_ultralytics(results)
+            elif model_type == "yolonas":
+                # YOLO-NAS (需要不同的處理方式)
+                results = model.predict(img, conf=confidence_threshold, iou=iou_threshold)
+                # YOLO-NAS 結果需要轉換
+                detections = sv.Detections.from_yolo_nas(results)
+            else:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"不支援的模型類型: {model_type}"
+                )
+        except RuntimeError as e:
+            raise HTTPException(status_code=500, detail=f"模型載入錯誤: {str(e)}")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"推理錯誤: {str(e)}")
         
         # 應用過濾
         if detections.confidence is not None:
@@ -92,6 +117,11 @@ async def detect_objects(
             threshold=iou_threshold
         )
         
+        # 獲取類別名稱（如果有）
+        class_names = None
+        if hasattr(results, 'names') and results.names:
+            class_names = results.names
+        
         # 轉換為回應格式
         detection_list = []
         for i in range(len(detections)):
@@ -102,21 +132,32 @@ async def detect_objects(
                 detection_dict["confidence"] = float(detections.confidence[i])
             if detections.class_id is not None:
                 detection_dict["class_id"] = int(detections.class_id[i])
+                # 添加類別名稱
+                if class_names and int(detections.class_id[i]) in class_names:
+                    detection_dict["class_name"] = class_names[int(detections.class_id[i])]
             if detections.tracker_id is not None:
                 detection_dict["tracker_id"] = int(detections.tracker_id[i])
             detection_list.append(Detection(**detection_dict))
         
         # 儲存處理後的圖片（可選）
-        # processed_path = PROCESSED_DIR / f"detected_{int(time.time())}.jpg"
-        # cv2.imwrite(str(processed_path), img)
-        # image_url = f"/static/processed/{processed_path.name}"
+        image_url = None
+        try:
+            from app.utils.file_handler import save_image
+            _, image_url = save_image(
+                img,
+                PROCESSED_DIR,
+                prefix="detected"
+            )
+        except Exception as e:
+            print(f"儲存圖片失敗: {e}")
+            # 不影響主要流程，繼續執行
         
         processing_time = time.time() - start_time
         
         return DetectionResponse(
             success=True,
             detections=detection_list,
-            image_url=None,  # image_url,
+            image_url=image_url,
             processing_time=processing_time
         )
         
